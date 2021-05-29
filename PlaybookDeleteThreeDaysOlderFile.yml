@@ -1,0 +1,48 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+	
+    - name: finding files that are three days older
+      find:
+        paths: "/tmp"
+        age: "3d"
+		register: "ThreeDaysOlderFiles"
+		
+	- debug: var=ThreeDaysOlderFiles.stdout_lines
+	
+	- name: Current /tmp disk usage
+      command: 'df -T /tmp | awk '{print$5}' | tail -n 1'
+      register: CurrentUsageBeforeRemovalFiles
+
+    - debug: PreRemovalUsage=CurrentUsageBeforeRemovalFiles.stdout
+	
+	- name: remove three days older files
+	  file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ ThreeDaysOlderFiles.files }}"
+ 
+ 
+	- name: After removal /tmp disk usage
+      command: 'df -T /tmp | awk '{print$5}' | tail -n 1'
+      register: UsageAfterRemovalFiles
+
+    - debug: PostRemovalUsage=UsageAfterRemovalFiles.stdout
+	
+	- debug:
+		msg: "size saved{{  PreRemovalUsage-PostRemovalUsage }}"
+	  
+	
+	- name: Saving the lock files 
+	  stat:
+        paths: "/tmp/*.lock"
+	    register: LockedFiles
+	    
+	
+	- name: List the lock files if any
+	  debug:
+		msg: "the lock files are:"
+	  when: LockedFiles.stat.exists
+       
+	  
