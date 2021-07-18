@@ -1,3 +1,7 @@
+'''
+Python REST client program which queries http://api.open-notify.org/astros.json [api.open-notify.org] 
+and list the user name in sorted order. Convert the REST JSON object to list<String> with JSON names in sorted order.
+'''
 import requests, json
 
 class RestPython:
